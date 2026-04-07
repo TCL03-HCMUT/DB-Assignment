@@ -164,7 +164,7 @@ CREATE TABLE IF NOT EXISTS TRIP (
             BOOKING_TYPE = 'Scheduled'
             AND (
                 REQUEST_TIME IS NOT NULL
-                AND (MINUTE(REQUEST_TIME) - MINUTE(BOOKING_TIME) >= 75)
+                AND TIMESTAMPDIFF(MINUTE, REQUEST_TIME, BOOKING_TIME) >= 75
             )
         )
     ),
@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS TRIP (
     CONSTRAINT VALID_TO_COORDS CHECK (
         TO_X BETWEEN -180 AND 180
         AND
-        FROM_Y BETWEEN -90 AND 90
+        TO_Y BETWEEN -90 AND 90
     ),
     CONSTRAINT TRIP_MUST_MOVE CHECK (
         FROM_X <> TO_X OR FROM_Y <> TO_Y
