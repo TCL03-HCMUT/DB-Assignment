@@ -13,13 +13,15 @@ INSERT INTO user_account
 ('Đào Bình Viện', '0478471276', 'daobinhvien@example.com', 'daobinhvien', 'Male', NULL),
 ('Trương Trúc Nam', '0772619483', 'truongtrucnam@example.com', 'truongtrucnam', 'Female', NULL);
 
+-- coi lại user_notification này đi. viết đơn giản hóa lại để phù hợp với bảng discount. 
+-- Summary: ko cần chia mức, cứ giảm số hoặc phần trăm, nói rõ. 
 INSERT INTO user_notification
 (TITLE, CONTENT,TIME) VALUES
 ('Deal sốc năm mới','Từ 1/1/2026 đến ngày 3/1/2026, giảm 30% cho cuốc đi xe ôtô.','2026-01-01 09:30:00'),
 ('Khao trọn ngày cá tháng tư','Trong ngày 1/4/2026, giảm 15% nếu thanh toán bằng thẻ tín dụng OCB','2026-04-01 09:00:00'),
-('Ưu đãi từ BIDV','Từ hôm nay đến ngày 31/12/2026, BIDV có ưu đãi dành cho chủ thẻ BIDV, giảm 10.000 cho các cuốc >= 30.000, giảm 30.000 cho cuốc từ 90.000','2026-02-02 09:30:00'),
-('Liên kết ví Momo, trao deal liền tay!','Đến 1/6/2026, liên kết ví Momo để nhận ngay ưu đãi giảm 20% cho cuốc đi xe ôtô.','2026-02-13 09:30:00'),
-('Ưu đãi đặc biệt từ Vietcombank','Từ hôm nay đến ngày 1/5/2026, Vietcombank có ưu đãi dành cho chủ thẻ Vietcombank, giảm 15.000 cho các cuốc >= 45.000, giảm 50.000 cho cuốc từ 150.000','2026-02-14 09:30:00');
+('Ưu đãi từ BIDV','Từ hôm nay đến ngày 31/12/2026, BIDV có ưu đãi dành cho chủ thẻ BIDV, giảm 10.000 cho các cuốc >= 30.000','2026-02-02 09:30:00'),
+('Liên kết ví Momo, trao deal liền tay!','Đến 1/6/2026, liên kết ví Momo để nhận ngay ưu đãi giảm 30.000 cho cuốc đi xe ôtô.','2026-02-13 09:30:00'),
+('Ưu đãi đặc biệt từ Vietcombank','Từ hôm nay đến ngày 1/5/2026, Vietcombank có ưu đãi dành cho chủ thẻ Vietcombank, giảm 20% cho các cuốc của tất cả các loại phương tiện','2026-02-14 09:30:00');
 
 INSERT INTO account_notification
 (ACCOUNT_ID, NOTIFICATION_ID) VALUES
@@ -127,25 +129,24 @@ INSERT INTO transport_mode
 ('Car', 4, 'Electric'),
 ('Car', 6, 'Standard');
 
-INSERT INTO vehicle_categorization
-(VEHICLE_ID, MODE_ID) VALUES
-(7,6),
-(8,6),
-(9,6),
-(10,1),
-(10,2),
-(11,1),
-(11,2),
-(12,1),
-(12,2),
-(13,1),
-(13,2),
-(14,1),
-(14,2),
-(15,1),
-(15,2),
-(16,1),
-(16,2);
+INSERT INTO vehicle_categorization (VEHICLE_ID, MODE_ID) VALUES
+(1, 6),  -- EcoSport → Car 6-seat Standard
+(2, 6),  -- Xpander  → Car 6-seat Standard
+(3, 6),  -- Fortuner → Car 6-seat Standard
+(4, 1),  -- Future Neo → Bike Standard
+(4, 2),  -- Future Neo → Bike Saver
+(5, 1),  -- Wave 110
+(5, 2),
+(6, 1),  -- Wave Alpha
+(6, 2),
+(7, 1),  -- Winner X 150
+(7, 2),
+(8, 1),  -- CBR500R
+(8, 2),
+(9, 1),  -- CBR650R (driver 9)
+(9, 2),
+(10, 1), -- CBR650R (driver 10)
+(10, 2);
 
 INSERT INTO TRIP
 (
@@ -174,13 +175,13 @@ PASSENGER_ID, MODE_ID, BOOKING_TYPE, REQUEST_TIME) VALUES
 (
  '268 Đ. Lý Thường Kiệt, Phường Diên Hồng, HCM', 10.772011, 106.657882,
  'Landmark 81, Vinhomes Central Park, Bình Thạnh, HCM', 10.794700, 106.722100,
- '2026-02-14 10:00:00', 'COMPLETED', NULL, 55000, 0, 44000,
+ '2026-02-14 10:00:00', 'COMPLETED', NULL, 55000, 0, 25000,
  4, 6, 'Standard', NULL),
 
 (
  '268 Đ. Lý Thường Kiệt, Phường Diên Hồng, HCM', 10.772807, 106.658603,
  '10-12 Đinh Tiên Hoàng, Sài gòn', 10.785892, 106.702513,
- '2026-02-20 07:30:00', 'COMPLETED', NULL, 40000, 0, 40000,
+ '2026-02-20 07:30:00', 'COMPLETED', NULL, 40000, 0, 32000,
  2, 1, 'Standard', NULL),
 
 (
@@ -269,17 +270,7 @@ INSERT INTO cancelled_trip
 (15,'Kế hoạch thay đổi'),
 (16,'Kế hoạch thay đổi');
 
-INSERT INTO completed_trip
-(TRIP_ID,TO_TIME,OBTAINED_GRABCOIN,RATING_STARS,FEEDBACK,DRIVER_PAY) VALUES
-(1,'2026-01-03 08:30:00',14,5,'Chuyển đi 5 sao',29400),
-(2,'2026-04-01 15:03:00',42,5,'Chuyển đi 5 sao',85000),
-(3,'2026-02-10 10:04:00',12,5,'Chuyển đi 5 sao',25000),
-(4,'2026-02-14 17:29:00',22,5,'Chuyển đi 5 sao',44000),
-(5,'2026-02-20 07:55:00',20,5,'Chuyển đi 5 sao',40000),
-(6,'2026-03-01 20:22:00',20,5,'Chuyển đi 5 sao',40000),
-(7,'2026-03-10 06:11:00',30,5,'Chuyển đi 5 sao',60000);
-
-INSERT INTO ASSIGNED_TRIP
+INSERT INTO assigned_trip
 (TRIP_ID, FROM_TIME, DRIVER_ID) VALUES
 (1,'2026-01-03 08:15:00',8),
 (2,'2026-04-01 14:35:00',9),
@@ -292,3 +283,39 @@ INSERT INTO ASSIGNED_TRIP
 (9,'2024-04-02 14:05:00',10),
 (10,'2024-04-03 14:05:00',10);
 
+INSERT INTO completed_trip
+(TRIP_ID,TO_TIME,OBTAINED_GRABCOIN,RATING_STARS,FEEDBACK,DRIVER_PAY) VALUES
+(1,'2026-01-03 08:30:00',14,5,'Chuyển đi 5 sao',29400),#discount: percentage 0.3
+(2,'2026-04-01 15:03:00',42,5,'Chuyển đi 5 sao',85000),#discount: percentage 0.15
+(3,'2026-02-10 10:04:00',12,5,'Chuyển đi 5 sao',25000),#discount: amount 10k
+(4,'2026-02-14 17:29:00',22,5,'Chuyển đi 5 sao',25000),#discount: amount 30k
+(5,'2026-02-20 07:55:00',20,5,'Chuyển đi 5 sao',32000),#discount: percentage 0.2
+(6,'2026-03-01 20:22:00',20,5,'Chuyển đi 5 sao',40000),
+(7,'2026-03-10 06:11:00',30,5,'Chuyển đi 5 sao',60000);
+
+INSERT INTO payment_method 
+(TYPE, ACCOUNT_IDENTIFIER, PASSENGER_ID) VALUES
+('Card','OCB374777',3),
+('Card','OCB315089',3),
+('Card','BIDV16689',5),
+('E-Wallet','MOMO0276301993',4),
+('Card','VCB5465155',2);
+
+INSERT INTO payment_transaction
+(PAYMENT_AMOUNT, DATE_TIME, PAID_BY_CASH, TIP, TRIP_ID, PAYMENT_METHOD_ID) VALUES
+(29000,'2026-01-03 08:32:00',TRUE,0,1,NULL),
+(85000,'2026-04-01 15:05:00',FALSE,0,2,1),  
+(25000,'2026-04-01 15:03:00',FALSE,0,3,3),  
+(25000,'2026-02-14 17:29:00',FALSE,0,4,4), 
+(32000,'2026-02-20 07:57:00',FALSE,0,5,5), 
+(40000,'2026-03-01 20:24:00',TRUE,0,6,NULL),
+(60000,'2026-03-10 06:13:00',TRUE,0,7,NULL);
+
+INSERT INTO saved_location
+(PASSENGER_ID, SUGGESTIVE_NAME, ADDRESS, COORDINATE_Y, COORDINATE_X) VALUES
+(1,'BK cs2','khu phố Tân Lập, Dong Hoa, Ho Chi Minh, Vietnam',10.880365, 106.805598),
+(1,'bk cs1','268 Đ. Lý Thường Kiệt, Phường 14, Diên Hồng, Hồ Chí Minh 70000, Vietnam',10.771912, 106.657952),
+(2,'bk cs1','268 Đ. Lý Thường Kiệt, Phường 14, Diên Hồng, Hồ Chí Minh 70000, Vietnam',10.771912, 106.657952),
+(3,'cà phê gần trường','523 Tô Hiến Thành, Phường 14, Diên Hồng, Hồ Chí Minh, Vietnam',10.772427, 106.660546),
+(4,'ca phe ong bau','J3 Đ. Bửu Long, Phường 15, Hòa Hưng, Hồ Chí Minh 70000, Vietnam',10.782776, 106.662352),
+(5,'truong le hong phong','235 Nguyễn Văn Cừ, Phường 4, Chợ Quán, Hồ Chí Minh 70000, Vietnam',10.764133, 106.681952);
