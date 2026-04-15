@@ -200,19 +200,19 @@ PASSENGER_ID, MODE_ID, BOOKING_TYPE, REQUEST_TIME) VALUES
 (
  '268 Đ. Lý Thường Kiệt, Phường Diên Hồng, HCM', 10.772807, 106.658603,
  '153 Nguyễn Chí Thanh, Street, An Đông, Hồ Chí Minh, Vietnam',10.759362, 106.666394,
- '2024-04-01 14:00:00', 'ONGOING', NULL, 90000, 0, 90000,
+ '2024-04-01 14:00:00', 'CANCELLED', NULL, 90000, 0, 90000,
  5, 1, 'Scheduled', '2024-04-01 07:00:00'),
 -- kiểm tra lại passenger_id
 (
  '268 Đ. Lý Thường Kiệt, Phường Diên Hồng, HCM', 10.772807, 106.658603,
  '153 Nguyễn Chí Thanh, Street, An Đông, Hồ Chí Minh, Vietnam',10.759362, 106.666394,
- '2024-04-02 14:00:00', 'ONGOING', NULL, 60000, 0, 60000,
+ '2024-04-02 14:00:00', 'CANCELLED', NULL, 60000, 0, 60000,
  5, 1, 'Scheduled', '2024-04-01 07:05:00'),
 
  (
  '268 Đ. Lý Thường Kiệt, Phường Diên Hồng, HCM', 10.772807, 106.658603,
  '153 Nguyễn Chí Thanh, Street, An Đông, Hồ Chí Minh, Vietnam',10.759362, 106.666394,
- '2024-04-03 14:00:00', 'ONGOING', NULL, 130000, 0, 130000,
+ '2024-04-03 14:00:00', 'CANCELLED', NULL, 130000, 0, 130000,
  5, 1, 'Scheduled', '2024-04-01 07:11:00'),
 
 (
@@ -262,6 +262,9 @@ INSERT INTO TRIP_DISCOUNT
 
 INSERT INTO CANCELLED_TRIP
 (TRIP_ID, CANCELLATION_REASON) VALUES
+(8,'Sai địa điểm'),
+(9,'Sai địa điểm'),
+(10,'Sai địa điểm'),
 (11,'Kế hoạch thay đổi'),
 (12,'Kế hoạch thay đổi'),
 (13,'Kế hoạch thay đổi'),
