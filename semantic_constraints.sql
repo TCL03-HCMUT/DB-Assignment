@@ -118,7 +118,7 @@ END//
 
 -- Sets the grab coin automatically
 CREATE TRIGGER GRABCOIN_ACCUMULATION
-AFTER INSERT ON COMPLETED_TRIP
+BEFORE INSERT ON COMPLETED_TRIP
 FOR EACH ROW 
 BEGIN
     DECLARE trip_final_price INT;
@@ -128,9 +128,7 @@ BEGIN
 
     SET trip_final_price = trip_final_price DIV 2000;
 
-    UPDATE COMPLETED_TRIP
-    SET OBTAINED_GRABCOIN = trip_final_price
-    WHERE TRIP_ID = T_ID;
+    SET NEW.OBTAINED_GRABCOIN = trip_final_price;
     
 END//
 DELIMITER ;
