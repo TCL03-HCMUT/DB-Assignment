@@ -2,6 +2,7 @@ DELIMITER $$
 
 
 -- p_mode_ids_list: vehicle category for this vehicle. for exapmle: command-separated '1,2', respectively standard bike and saver bike
+-- p- prefix stands for 'parameter'
 CREATE PROCEDURE INSERT_VEHICLE_WITH_MODES (
     IN p_plate_number VARCHAR(20),
     IN p_make VARCHAR(20),
