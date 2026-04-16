@@ -276,7 +276,7 @@ CREATE TABLE IF NOT EXISTS TRIP_DISCOUNT (
 );
 
 -- EERD related triggers
-DELIMITER / /
+DELIMITER //
 
 -- Prevent a Passenger from being registered as a Driver
 CREATE TRIGGER BEFORE_DRIVER_INSERT

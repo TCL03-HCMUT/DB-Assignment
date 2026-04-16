@@ -118,7 +118,7 @@ INSERT INTO VEHICLE
 ('54OS-179.36','Honda Moto','Winner X 150','Xanh lam',1,7,NULL),  #tài số 7 ko xài xe này hôm nay
 ('59E-976.72','Honda Moto','CBR500R','Xanh lam',1,9,9), #tài số 9 xài xe này hôm nay
 ('50GNX-323.43','Honda Moto','CBR650R','Xanh lam',1,9,NULL), #tài số 9 ko xài xe này hôm nay
-('55JB-155.65','Honda Moto','CBR650R','Xanh lam',1,10,NULL); #tài số 10 ko xài xe này hôm nay
+('55JB-155.65','Honda Moto','CBR650R','Xanh lam',1,10,10); #tài số 10 đang chạy xe này
 
 INSERT INTO TRANSPORT_MODE
 (TYPE, SEAT_CAPACITY, SERVICE_LEVEL) VALUES
@@ -277,7 +277,7 @@ INSERT INTO ASSIGNED_TRIP
 (1,'2026-01-03 08:15:00',8),
 (2,'2026-04-01 14:35:00',9),
 (3,'2026-02-10 09:50:00',9),
-(4,'2026-02-14 17:05:00',7),
+(4,'2026-02-14 17:05:00',8),
 (5,'2026-02-20 07:35:00',7),
 (6,'2026-03-01 20:05:00',6),
 (7,'2026-03-10 05:55:00',6);
