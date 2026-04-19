@@ -208,3 +208,42 @@ BEGIN
     END IF;
 END//
 DELIMITER ;
+
+-- Constraint 9: Final price
+DELIMITER //
+
+CREATE TRIGGER VALIDATE_FINAL_PRICE_CALCULATION
+BEFORE INSERT ON TRIP
+FOR EACH ROW
+BEGIN
+    DECLARE total_percentage DECIMAL(10, 4) DEFAULT 0.0;
+    DECLARE total_amount_discount INT DEFAULT 0;
+    DECLARE grabcoin_discount_value DECIMAL(10, 2) DEFAULT 0.0;
+    DECLARE calculated_final_price INT DEFAULT 0;
+    
+    SELECT 
+        COALESCE(SUM(D.PERCENTAGE_DISCOUNT), 0), 
+        COALESCE(SUM(D.AMOUNT_DISCOUNT), 0)
+    INTO total_percentage, total_amount_discount
+    FROM TRIP_DISCOUNT TD
+    JOIN DISCOUNT D ON TD.DISCOUNT_ID = D.DISCOUNT_ID
+    WHERE TD.TRIP_ID = NEW.TRIP_ID;
+
+    SET grabcoin_discount_value = (NEW.USED_GRABCOINS / 150.0) * 5000;
+
+    SET calculated_final_price = ROUND(
+        NEW.ESTIMATED_PRICE * (1 - total_percentage) 
+        - total_amount_discount 
+        - grabcoin_discount_value
+    );
+    IF calculated_final_price < 0 THEN
+        SET calculated_final_price = 0;
+    END IF;
+
+    IF NEW.FINAL_PRICE <> calculated_final_price THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Semantic constraint violated: Final_price calculation is incorrect';
+    END IF;
+END //
+
+DELIMITER ;

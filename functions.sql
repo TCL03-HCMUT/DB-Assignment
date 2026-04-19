@@ -111,3 +111,82 @@ BEGIN
 END//
 
 DELIMITER ;
+
+
+-- Function 2: Driver Bonus Calculation
+-- A function that calculates a monthly bonus for drivers based on their completed trips.
+-- The bonus is influenced by multiple factors, including the average rating of their trips,
+-- the type of vehicle they used, and whether they completed any trips during peak hours.
+DELIMITER //
+
+CREATE FUNCTION CALCULATE_DRIVER_BONUS_FEE(
+    p_driver_id INT,
+    p_month INT,
+    p_year INT
+) 
+RETURNS DECIMAL(10,2)
+READS SQL DATA
+BEGIN
+    -- Variables for calculation
+    DECLARE v_total_bonus DECIMAL(10,2) DEFAULT 0.0;
+    DECLARE v_trip_rating INT;
+    DECLARE v_vehicle_capacity INT;
+    DECLARE v_has_payment INT;
+    DECLARE done INT DEFAULT FALSE;
+
+    -- 1. Input Validation
+    IF p_month < 1 OR p_month > 12 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid month input.';
+    END IF;
+
+    -- 2. Cursor to fetch details for each trip
+    DECLARE trip_cursor CURSOR FOR 
+        SELECT CT.RATING_STARS, V.CAPACITY, T.TRIP_ID
+        FROM COMPLETED_TRIP CT
+        JOIN ASSIGNED_TRIP AT ON CT.TRIP_ID = AT.TRIP_ID
+        JOIN TRIP T ON AT.TRIP_ID = T.TRIP_ID
+        JOIN VEHICLE V ON V.USING_DRIVER_ID = AT.DRIVER_ID
+        WHERE AT.DRIVER_ID = p_driver_id 
+          AND MONTH(CT.TO_TIME) = p_month 
+          AND YEAR(CT.TO_TIME) = p_year;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN trip_cursor;
+
+    -- 3. Loop through data
+    calc_loop: LOOP
+        FETCH trip_cursor INTO v_trip_rating, v_vehicle_capacity, v_has_payment;
+        IF done THEN
+            LEAVE calc_loop;
+        END IF;
+
+        -- 4. Query Validation: Check if payment exists for this trip
+        SELECT COUNT(*) INTO v_has_payment FROM PAYMENT_TRANSACTION 
+        WHERE TRIP_ID = v_has_payment;
+
+        IF v_has_payment > 0 THEN
+            -- Start with a base bonus of 5000 VNĐ
+            SET v_total_bonus = v_total_bonus + 5000;
+
+            -- Complex IF Logic: Rating-based multiplier
+            IF v_trip_rating = 5 THEN
+                SET v_total_bonus = v_total_bonus + 2000;
+            ELSEIF v_trip_rating >= 4 THEN
+                SET v_total_bonus = v_total_bonus + 500;
+            END IF;
+
+            -- Capacity incentive (Aggregate functions can't check current vehicle state per trip easily)
+            IF v_vehicle_capacity >= 6 THEN
+                SET v_total_bonus = v_total_bonus + 1500;
+            END IF;
+        END IF;
+
+    END LOOP;
+
+    CLOSE trip_cursor;
+
+    RETURN v_total_bonus;
+END //
+
+DELIMITER ;
