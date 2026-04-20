@@ -1,3 +1,4 @@
+-- Active: 1775981929461@@localhost@3306@GRAB
 DELIMITER //
 
 
@@ -126,7 +127,8 @@ DELIMITER ;
 -- Procedure 2: Báo cáo số lượng chuyến đi đã hoàn thành theo tháng trong khoảng thời gian nhất định
 DELIMITER //
 
-CREATE PROCEDURE GET_MONTHLY_COMPLETED_TRIPS_REPORT(
+CREATE PROCEDURE GET_PASSENGER_MONTHLY_REPORT(
+    IN p_passenger_id INT,
     IN p_months_back INT
 )
 BEGIN
@@ -136,6 +138,7 @@ BEGIN
     FROM TRIP T
     JOIN COMPLETED_TRIP C ON T.TRIP_ID = C.TRIP_ID
     WHERE 
+        T.PASSENGER_ID = p_passenger_id AND
         C.TO_TIME >= DATE_SUB(CURRENT_DATE, INTERVAL p_months_back MONTH) 
     GROUP BY Month
     HAVING 
