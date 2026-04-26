@@ -81,6 +81,31 @@ BEGIN
     WHERE VEHICLE_ID = p_vehicle_id;
 END //
 
+CREATE PROCEDURE CHANGE_VEHICLE_PLATE(
+    IN p_vehicle_id INT,
+    IN p_plate_number VARCHAR(20)
+)
+BEGIN
+    IF p_plate_number NOT REGEXP '^[0-9]{2}[A-Z]{1,3}-[0-9]{3}\\.[0-9]{2}$' THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invalid plate number. The format must be: [2 digits][1 to 3 capital letters][-][3 digits][.][2 digits]';
+    END IF;
+
+    UPDATE VEHICLE
+    SET PLATE_NUMBER = p_plate_number
+    WHERE VEHICLE_ID = p_vehicle_id;
+END//
+
+CREATE PROCEDURE CHANGE_VEHICLE_COLOR(
+    IN p_vehicle_id INT,
+    IN p_color VARCHAR(20)
+)
+BEGIN
+    UPDATE VEHICLE
+    SET COLOR = p_color
+    WHERE VEHICLE_ID = p_vehicle_id;
+END//
+
 -- Procedure 1: Lấy danh sách Vehicle của Driver
 
 CREATE PROCEDURE GET_DRIVER_VEHICLE_LIST(
