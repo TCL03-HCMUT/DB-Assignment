@@ -261,20 +261,6 @@ BEGIN
     SET NEW.PAYMENT_AMOUNT = v_final_price;
 END//
 
--- Add these triggers for both 6 and 7: Updating trip status can also cause collisions
-CREATE TRIGGER DRIVER_ACTIVE_TRIP_CHECK
-BEFORE UPDATE ON TRIP
-FOR EACH ROW
-BEGIN
-    DECLARE active_trip_count INT;
-    IF NEW.STATUS IN ('ASSIGNED','DRIVER_ARRIVED','ONGOING') THEN
-        -- Query the passenger/driver id
-        -- Query all trips for the passenger/driver that have active statuses 
-        -- that are NOT the trip we are updating
-        SELECT COUNT(*)
-        INTO active_trip_count
-        FROM T
-END//
 
 -- Constraint 6: Single Ongoing Trip per Driver
 
@@ -303,7 +289,7 @@ BEGIN
             END IF;
         END IF;
     END IF;
-END;
+END//
 
 CREATE TRIGGER DRIVER_ONGOING_CHECK
 BEFORE INSERT ON ASSIGNED_TRIP
@@ -342,7 +328,7 @@ BEGIN
             SET MESSAGE_TEXT = 'The passenger already has at least one another active trip. Active trips are trips of status: ONGOING';
         end if;
     END IF;
-END;
+END//
 
 CREATE TRIGGER PASSENGER_ONGOING_CHECK
 BEFORE INSERT ON ASSIGNED_TRIP
