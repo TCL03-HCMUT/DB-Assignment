@@ -18,12 +18,22 @@ BEGIN
     DECLARE v_vehicle_id INT;
     DECLARE v_mode_id_str VARCHAR(255);
     DECLARE v_pos INT DEFAULT 1;
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET p_vehicle_id = -1;
+        ROLLBACK;
+    END;
 
     -- PLATE NUMBER validation
     IF p_plate_number NOT REGEXP '^[0-9]{2}[A-Z]{1,3}-[0-9]{3}\\.[0-9]{2}$' THEN
+        SET p_vehicle_id = -1;
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Invalid plate number. The format must be: [2 digits][1 to 3 capital letters][-][3 digits][.][2 digits]';
     END IF;
+
+    -- Start transaction
+    START TRANSACTION;
 
     -- Insert into VEHICLE
     INSERT INTO VEHICLE (
@@ -55,6 +65,9 @@ BEGIN
             VALUES (v_vehicle_id, CAST(v_mode_id_str AS UNSIGNED));
         END IF;
     END WHILE;
+
+    -- Commit transaction if all steps succeed
+    COMMIT;
 END //
 
 CREATE PROCEDURE SWITCH_VEHICLE(
@@ -106,6 +119,54 @@ BEGIN
     SET COLOR = p_color
     WHERE VEHICLE_ID = p_vehicle_id;
 END//
+
+CREATE PROCEDURE CHANGE_VEHICLE_MODES(
+    IN p_vehicle_id INT,
+    IN p_mode_ids_list TEXT
+)
+BEGIN
+    DECLARE v_mode_id_str VARCHAR(255);
+    DECLARE v_pos INT DEFAULT 1;
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Failed to update vehicle modes';
+    END;
+
+    -- Validate input
+    IF p_mode_ids_list IS NULL OR CHAR_LENGTH(TRIM(p_mode_ids_list)) = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Mode IDs list cannot be empty';
+    END IF;
+
+    -- Start transaction
+    START TRANSACTION;
+
+    -- Delete existing vehicle categorizations
+    DELETE FROM VEHICLE_CATEGORIZATION
+    WHERE VEHICLE_ID = p_vehicle_id;
+
+    -- Insert new vehicle categorizations
+    WHILE CHAR_LENGTH(p_mode_ids_list) > 0 AND v_pos > 0 DO
+        SET v_pos = LOCATE(',', p_mode_ids_list);
+
+        IF v_pos > 0 THEN
+            SET v_mode_id_str = LEFT(p_mode_ids_list, v_pos - 1);
+            SET p_mode_ids_list = SUBSTRING(p_mode_ids_list, v_pos + 1);
+        ELSE
+            SET v_mode_id_str = p_mode_ids_list;
+            SET p_mode_ids_list = '';
+        END IF;
+
+        IF v_mode_id_str <> '' THEN
+            INSERT INTO VEHICLE_CATEGORIZATION (VEHICLE_ID, MODE_ID)
+            VALUES (p_vehicle_id, CAST(TRIM(v_mode_id_str) AS UNSIGNED));
+        END IF;
+    END WHILE;
+
+    -- Commit transaction if all steps succeed
+    COMMIT;
+END //
 
 -- Procedure 1: Lấy danh sách Vehicle của Driver
 
