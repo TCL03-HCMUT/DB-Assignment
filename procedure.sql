@@ -120,53 +120,32 @@ BEGIN
     WHERE VEHICLE_ID = p_vehicle_id;
 END//
 
-CREATE PROCEDURE CHANGE_VEHICLE_MODES(
+-- Thêm 1 categorization mới cho xe
+CREATE PROCEDURE ADD_VEHICLE_CATEGORIZATION(
     IN p_vehicle_id INT,
-    IN p_mode_ids_list TEXT
+    IN p_mode_id INT
 )
 BEGIN
-    DECLARE v_mode_id_str VARCHAR(255);
-    DECLARE v_pos INT DEFAULT 1;
-    
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Failed to update vehicle modes';
-    END;
-
-    -- Validate input
-    IF p_mode_ids_list IS NULL OR CHAR_LENGTH(TRIM(p_mode_ids_list)) = 0 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Mode IDs list cannot be empty';
+    -- Check if this categorization already exists
+    IF NOT EXISTS (
+        SELECT 1 FROM VEHICLE_CATEGORIZATION 
+        WHERE VEHICLE_ID = p_vehicle_id AND MODE_ID = p_mode_id
+    ) THEN
+        INSERT INTO VEHICLE_CATEGORIZATION (VEHICLE_ID, MODE_ID)
+        VALUES (p_vehicle_id, p_mode_id);
     END IF;
+END//
 
-    -- Start transaction
-    START TRANSACTION;
-
-    -- Delete existing vehicle categorizations
+-- Xóa 1 categorization của xe (không cho xóa nếu nó là mode cuối cùng)
+CREATE PROCEDURE REMOVE_VEHICLE_CATEGORIZATION(
+    IN p_vehicle_id INT,
+    IN p_mode_id INT
+)
+BEGIN
+    -- Delete the categorization
     DELETE FROM VEHICLE_CATEGORIZATION
-    WHERE VEHICLE_ID = p_vehicle_id;
-
-    -- Insert new vehicle categorizations
-    WHILE CHAR_LENGTH(p_mode_ids_list) > 0 AND v_pos > 0 DO
-        SET v_pos = LOCATE(',', p_mode_ids_list);
-
-        IF v_pos > 0 THEN
-            SET v_mode_id_str = LEFT(p_mode_ids_list, v_pos - 1);
-            SET p_mode_ids_list = SUBSTRING(p_mode_ids_list, v_pos + 1);
-        ELSE
-            SET v_mode_id_str = p_mode_ids_list;
-            SET p_mode_ids_list = '';
-        END IF;
-
-        IF v_mode_id_str <> '' THEN
-            INSERT INTO VEHICLE_CATEGORIZATION (VEHICLE_ID, MODE_ID)
-            VALUES (p_vehicle_id, CAST(TRIM(v_mode_id_str) AS UNSIGNED));
-        END IF;
-    END WHILE;
-
-    -- Commit transaction if all steps succeed
-    COMMIT;
-END //
+    WHERE VEHICLE_ID = p_vehicle_id AND MODE_ID = p_mode_id;
+END//
 
 -- Procedure 1: Lấy danh sách Vehicle của Driver
 
