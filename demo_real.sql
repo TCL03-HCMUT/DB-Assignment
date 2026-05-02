@@ -117,3 +117,140 @@ SELECT CALCULATE_DRIVER_BONUS_FEE (8, 1, 2026) AS 'Driver 8, Jan 2026 Bonus (No 
 -- No completed trips in this month.
 -- Expected bonus: 0.
 SELECT CALCULATE_DRIVER_BONUS_FEE (10, 1, 2026) AS 'Driver 10, Jan 2026 Bonus (No Trips)';
+-- CONSTRAINT 8: Valid License Vehicle Registration
+-- Test that drivers can only register vehicle types compatible with their license
+
+-- Setup: Display vehicles of each driver
+SELECT 
+    D.ACCOUNT_ID as driver_id,
+    D.DRIVER_LICENSE_GRADE as license,
+    V.VEHICLE_ID,
+    V.CAPACITY
+FROM DRIVER D
+LEFT JOIN VEHICLE V ON D.ACCOUNT_ID = V.REGISTRANT_ID
+ORDER BY D.ACCOUNT_ID, V.VEHICLE_ID;
+
+-- Test Case 8.1: Driver with A1 license trying to register a Bike (should PASS)
+-- Driver 6 has A1 license, Mode 1 is Bike Standard (SEAT_CAPACITY = 1)
+-- Vehicle 4 of Driver 6 is a bike with CAPACITY = 2
+-- SHOULD SUCCEED
+CALL ADD_VEHICLE_CATEGORIZATION(4, 1);
+
+-- Test Case 8.2: Driver with B2 license trying to register a Car (should PASS)
+-- Driver 8 has B2 license, Mode 6 is Car 6-seater Standard (SEAT_CAPACITY = 6)
+-- Vehicle 3 is a car with CAPACITY = 7
+-- SHOULD SUCCEED
+CALL ADD_VEHICLE_CATEGORIZATION(3, 6);
+
+-- Test Case 8.3: Driver with A1 license trying to register a Car (should FAIL)
+-- Driver 1 has A1 license, trying to add Mode 3 (Car) to Vehicle 1 (Bike with CAPACITY = 2)
+-- This should violate Constraint 8 - A1 license can only drive bikes
+-- Expected error: "Semantic constraint violated: Driver license must be B2, C, D, E, or F to register a car"
+CALL ADD_VEHICLE_CATEGORIZATION(1, 3);
+
+
+-- CONSTRAINT 10: Matching Vehicle and Service Types
+-- Test that assigned drivers' vehicles match the requested trip mode
+
+-- Setup: Verify current assignments and vehicle modes
+-- Looking at data:
+-- Trip 1: MODE_ID = 6 (Car 6-seat), assigned to Driver 8 using Vehicle 2 (Xpander, has MODE 6) - MATCH ✓
+-- Trip 2: MODE_ID = 1 (Bike), assigned to Driver 9 using Vehicle 8 (CBR500R, has MODE 1) - MATCH ✓
+-- Trip 3: MODE_ID = 1 (Bike), assigned to Driver 9 using Vehicle 8 (CBR500R, has MODE 1) - MATCH ✓
+-- Trip 4: MODE_ID = 6 (Car 6-seat), assigned to Driver 8 using Vehicle 2 (Xpander, has MODE 6) - MATCH ✓
+
+-- Test Case 10.1: Verify valid assignments exist (PASS)
+-- Check assignments that should match
+SELECT 
+    T.TRIP_ID,
+    T.MODE_ID,
+    AT.DRIVER_ID,
+    V.VEHICLE_ID,
+    V.USING_DRIVER_ID,
+    GROUP_CONCAT(VC.MODE_ID) as vehicle_modes
+FROM TRIP T
+LEFT JOIN ASSIGNED_TRIP AT ON T.TRIP_ID = AT.TRIP_ID
+LEFT JOIN VEHICLE V ON V.VEHICLE_ID = (
+    SELECT VEHICLE_ID FROM VEHICLE WHERE USING_DRIVER_ID = AT.DRIVER_ID LIMIT 1
+)
+LEFT JOIN VEHICLE_CATEGORIZATION VC ON V.VEHICLE_ID = VC.VEHICLE_ID
+WHERE T.TRIP_ID IN (1, 2, 3, 4)
+GROUP BY T.TRIP_ID, V.VEHICLE_ID
+ORDER BY T.TRIP_ID;
+
+-- Test Case 10.2: Create a new trip that would violate constraint if assigned to wrong driver
+-- Create a new bike trip (MODE_ID = 1)
+INSERT INTO TRIP
+(FROM_ADDRESS, FROM_Y, FROM_X, TO_ADDRESS, TO_Y, TO_X, BOOKING_TIME, STATUS, 
+ PICKUP_INFO, ESTIMATED_PRICE, USED_GRABCOINS, FINAL_PRICE, PASSENGER_ID, MODE_ID, BOOKING_TYPE, REQUEST_TIME)
+VALUES
+('268 Đ. Lý Thường Kiệt', 10.772807, 106.658603,
+ '86 Đ. Số 23, Tân Mỹ, HCM', 10.714079, 106.728499,
+ '2026-03-20 10:00:00', 'PENDING', NULL, 50000, 0, 50000,
+ 2, 1, 'Standard', NULL);
+
+-- Now try to assign this BIKE trip (MODE_ID = 1) to Driver 8 who is using Vehicle 2 (Xpander, CAR with MODE 6)
+-- This SHOULD FAIL - vehicle doesn't support the trip mode
+-- Vehicle 2 modes: Car 6-seat (MODE 6 only)
+-- Trip needs MODE 1 (Bike Standard) but Vehicle 2 doesn't have Bike modes
+INSERT INTO ASSIGNED_TRIP (TRIP_ID, FROM_TIME, DRIVER_ID)
+VALUES (18, '2026-03-20 10:05:00', 8);
+
+
+-- Test getting paginated list of driver's vehicles with various filters
+-- Data summary:
+-- Driver 6: owns vehicles 4, 5 (bikes with CAPACITY=2)
+-- Driver 7: owns vehicles 6, 7 (bikes with CAPACITY=2)
+-- Driver 8: owns vehicles 1, 2, 3 (cars with CAPACITY=7)
+-- Driver 9: owns vehicles 8, 9 (bikes with CAPACITY=2)
+-- Driver 10: owns vehicle 10 (bike with CAPACITY=2)
+
+
+-- Test Case 1.1: Get vehicles filtered by capacity = 7 and service = 'Standard' for Driver 8
+-- Expected: Returns only vehicles with capacity 7 and standard service (all 3 cars: vehicles 1, 2, 3)
+CALL GET_DRIVER_VEHICLE_LIST(
+    8,              -- p_driver_id: Driver 8
+    'Standard',     -- p_service_level: filter by Standard service
+    7,              -- p_capacity: capacity must be exactly 7
+    'CAPACITY_DESC',-- p_sort_option
+    NULL,           -- p_plate_number: no filter
+    10,             -- p_limit
+    0               -- p_offset
+);
+
+
+-- Test Case 1.2: Get vehicles filtered by plate number pattern for Driver 8
+-- Expected: Returns vehicles matching the plate pattern (1 vehicle)
+CALL GET_DRIVER_VEHICLE_LIST(
+    8,              -- p_driver_id: Driver 8
+    NULL,           -- p_service_level: no filter
+    NULL,           -- p_capacity: no filter
+    'CAPACITY_DESC',-- p_sort_option
+    'E',            -- p_plate_number: search for plates containing 'E' (52E-556, 57A-987 contains E)
+    10,             -- p_limit
+    0               -- p_offset
+);
+
+-- Test Case 1.3: Get vehicles sorted by capacity ascending for Driver 6
+-- Expected: Returns vehicles 4, 5 (both have capacity 2) sorted by capacity
+CALL GET_DRIVER_VEHICLE_LIST(
+    6,              -- p_driver_id: Driver 6 (bike owner)
+    NULL,           -- p_service_level: no filter
+    NULL,           -- p_capacity: no filter
+    'CAPACITY_ASC', -- p_sort_option: sort by capacity ascending
+    NULL,           -- p_plate_number: no filter
+    10,             -- p_limit
+    0               -- p_offset
+);
+
+-- Test Case 1.6: Get vehicles sorted by MAKE for Driver 8
+-- Expected: Returns all 3 vehicles of Driver 8 sorted by vehicle make (Ford, Mitsubishi, Toyota)
+CALL GET_DRIVER_VEHICLE_LIST(
+    8,              -- p_driver_id: Driver 8
+    NULL,           -- p_service_level: no filter
+    NULL,           -- p_capacity: no filter
+    'MAKE',         -- p_sort_option: sort by make
+    NULL,           -- p_plate_number: no filter
+    10,             -- p_limit
+    0               -- p_offset
+);
