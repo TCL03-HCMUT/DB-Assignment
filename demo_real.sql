@@ -254,3 +254,36 @@ CALL GET_DRIVER_VEHICLE_LIST(
     10,             -- p_limit
     0               -- p_offset
 );
+
+-- insert vehicle, switch vehicle, delete vehicle test 
+SET @registrant_id = 8;
+SET @plate_number = '50W-776.74';
+SET @make = 'Toyota';
+SET @model = 'Camry';
+SET @color = 'Tim';
+SET @capacity = 5;
+SET @mode_list = '3';
+SET @using_driver_id = NULL;
+
+CALL INSERT_VEHICLE(
+    @plate_number,
+    @make,
+    @model,
+    @color,
+    @capacity,
+    @registrant_id,
+    @using_driver_id,
+    @model_list,
+    @new_vehicle_id
+);
+
+SELECT @new_vehicle_id;
+
+CALL SWITCH_VEHICLE(
+    @registrant_id,
+     @new_vehicle_id
+     );
+
+CALL DELETE_VEHICLE(
+@new_vehicle_id
+     );
