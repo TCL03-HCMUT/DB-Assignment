@@ -273,7 +273,7 @@ CALL INSERT_VEHICLE(
     @capacity,
     @registrant_id,
     @using_driver_id,
-    @model_list,
+    @mode_list,
     @new_vehicle_id
 );
 

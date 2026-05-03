@@ -91,6 +91,19 @@ CREATE PROCEDURE DELETE_VEHICLE(
     IN p_vehicle_id INT
 )
 BEGIN
+    DECLARE v_using_driver_id INT;
+    
+    -- Check if vehicle is currently being used
+    SELECT USING_DRIVER_ID INTO v_using_driver_id
+    FROM VEHICLE
+    WHERE VEHICLE_ID = p_vehicle_id;
+    
+    -- If vehicle is being used, signal error
+    IF v_using_driver_id IS NOT NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot delete vehicle while it is being used by a driver. Please switch to another vehicle first.';
+    END IF;
+    
     DELETE FROM VEHICLE
     WHERE VEHICLE_ID = p_vehicle_id;
 END //
