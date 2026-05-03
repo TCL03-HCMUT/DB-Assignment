@@ -128,6 +128,7 @@ BEGIN
     DECLARE v_trip_rating INT;
     DECLARE v_vehicle_capacity INT;
     DECLARE v_has_payment INT;
+    DECLARE v_driver_exists INT;
     DECLARE done INT DEFAULT FALSE;
 
     
@@ -148,6 +149,15 @@ BEGIN
     -- 1. Input Validation
     IF p_month < 1 OR p_month > 12 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid month input.';
+    END IF;
+
+    -- Check if driver exists
+    SELECT COUNT(*) INTO v_driver_exists
+    FROM DRIVER WHERE ACCOUNT_ID = p_driver_id;
+
+    IF v_driver_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Driver does not exist';
     END IF;
     
     OPEN trip_cursor;
