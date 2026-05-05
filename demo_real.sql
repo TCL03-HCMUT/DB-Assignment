@@ -97,13 +97,13 @@ SELECT GRAB_COIN_BONUS (1, 2, 2026) AS 'Passenger 1, Feb 2026 Bonus';
 
 -- Test case 1: Driver 6, March 2026.
 -- Has two completed trips (Trip 6, Trip 7) with payment.
--- Both have 5-star ratings (+2000 each) and vehicle capacity < 6. Base bonus (+5000 each).
+-- Both have 5-star ratings (+2000 each) and transport mode seat capacity < 6. Base bonus (+5000 each).
 -- Expected bonus: (5000 + 2000) * 2 = 14000.
 SELECT CALCULATE_DRIVER_BONUS_FEE (6, 3, 2026) AS 'Driver 6, Mar 2026 Bonus';
 
 -- Test case 2: Driver 8, February 2026.
 -- Has one completed trip (Trip 4). 
--- Its rating was updated to 3 stars earlier in this file (+0). Vehicle capacity >= 6 (+1500). Base bonus (+5000).
+-- Its rating was updated to 3 stars earlier in this file (+0). Transport mode seat capacity >= 6 (+1500). Base bonus (+5000).
 -- Expected bonus: 5000 + 0 + 1500 = 6500.
 SELECT CALCULATE_DRIVER_BONUS_FEE (8, 2, 2026) AS 'Driver 8, Feb 2026 Bonus';
 
