@@ -126,7 +126,7 @@ BEGIN
     -- Variables for calculation
     DECLARE v_total_bonus DECIMAL(10,2) DEFAULT 0.0;
     DECLARE v_trip_rating INT;
-    DECLARE v_vehicle_capacity INT;
+    DECLARE v_seat_capacity INT;
     DECLARE v_has_payment INT;
     DECLARE v_driver_exists INT;
     DECLARE done INT DEFAULT FALSE;
@@ -135,11 +135,11 @@ BEGIN
 
     -- 2. Cursor to fetch details for each trip
     DECLARE trip_cursor CURSOR FOR 
-        SELECT CT.RATING_STARS, V.CAPACITY, T.TRIP_ID
+        SELECT CT.RATING_STARS, TM.SEAT_CAPACITY, T.TRIP_ID
         FROM COMPLETED_TRIP CT
         JOIN ASSIGNED_TRIP AT ON CT.TRIP_ID = AT.TRIP_ID
         JOIN TRIP T ON AT.TRIP_ID = T.TRIP_ID
-        JOIN VEHICLE V ON V.USING_DRIVER_ID = AT.DRIVER_ID
+        JOIN TRANSPORT_MODE TM ON T.MODE_ID = TM.MODE_ID
         WHERE AT.DRIVER_ID = p_driver_id 
           AND MONTH(CT.TO_TIME) = p_month 
           AND YEAR(CT.TO_TIME) = p_year;
@@ -164,7 +164,7 @@ BEGIN
 
     -- 3. Loop through data
     calc_loop: LOOP
-        FETCH trip_cursor INTO v_trip_rating, v_vehicle_capacity, v_has_payment;
+        FETCH trip_cursor INTO v_trip_rating, v_seat_capacity, v_has_payment;
         IF done THEN
             LEAVE calc_loop;
         END IF;
@@ -184,8 +184,8 @@ BEGIN
                 SET v_total_bonus = v_total_bonus + 500;
             END IF;
 
-            -- Capacity incentive (Aggregate functions can't check current vehicle state per trip easily)
-            IF v_vehicle_capacity >= 6 THEN
+            -- Capacity incentive
+            IF v_seat_capacity >= 6 THEN
                 SET v_total_bonus = v_total_bonus + 1500;
             END IF;
         END IF;
