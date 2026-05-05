@@ -21,13 +21,12 @@ BEGIN
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
-        SET p_vehicle_id = -1;
         ROLLBACK;
+        RESIGNAL;
     END;
 
     -- PLATE NUMBER validation
     IF p_plate_number NOT REGEXP '^[0-9]{2}[A-Z]{1,3}-[0-9]{3}\\.[0-9]{2}$' THEN
-        SET p_vehicle_id = -1;
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Invalid plate number. The format must be: [2 digits][1 to 3 capital letters][-][3 digits][.][2 digits]';
     END IF;
@@ -75,6 +74,29 @@ CREATE PROCEDURE SWITCH_VEHICLE(
     IN p_vehicle_id INT
 )
 BEGIN
+    DECLARE v_vehicle_exists INT;
+    DECLARE v_belongs_to_driver INT;
+    
+    -- Validate vehicle exists
+    SELECT COUNT(*) INTO v_vehicle_exists
+    FROM VEHICLE
+    WHERE VEHICLE_ID = p_vehicle_id;
+    
+    IF v_vehicle_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Vehicle does not exist';
+    END IF;
+    
+    -- Validate vehicle belongs to this driver
+    SELECT COUNT(*) INTO v_belongs_to_driver
+    FROM VEHICLE
+    WHERE VEHICLE_ID = p_vehicle_id AND REGISTRANT_ID = p_registrant_id;
+    
+    IF v_belongs_to_driver = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Vehicle does not belong to this driver';
+    END IF;
+    
     -- Nullify all vehicles of this registrant
     UPDATE VEHICLE
     SET USING_DRIVER_ID = NULL
@@ -113,9 +135,22 @@ CREATE PROCEDURE CHANGE_VEHICLE_PLATE(
     IN p_plate_number VARCHAR(20)
 )
 BEGIN
+    DECLARE v_vehicle_exists INT;
+    
+    -- Validate plate number format
     IF p_plate_number NOT REGEXP '^[0-9]{2}[A-Z]{1,3}-[0-9]{3}\\.[0-9]{2}$' THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Invalid plate number. The format must be: [2 digits][1 to 3 capital letters][-][3 digits][.][2 digits]';
+    END IF;
+    
+    -- Validate vehicle exists
+    SELECT COUNT(*) INTO v_vehicle_exists
+    FROM VEHICLE
+    WHERE VEHICLE_ID = p_vehicle_id;
+    
+    IF v_vehicle_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Vehicle does not exist';
     END IF;
 
     UPDATE VEHICLE
@@ -128,6 +163,24 @@ CREATE PROCEDURE CHANGE_VEHICLE_COLOR(
     IN p_color VARCHAR(20)
 )
 BEGIN
+    DECLARE v_vehicle_exists INT;
+    
+    -- Validate color is not empty
+    IF p_color IS NULL OR CHAR_LENGTH(TRIM(p_color)) = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Color cannot be empty';
+    END IF;
+    
+    -- Validate vehicle exists
+    SELECT COUNT(*) INTO v_vehicle_exists
+    FROM VEHICLE
+    WHERE VEHICLE_ID = p_vehicle_id;
+    
+    IF v_vehicle_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Vehicle does not exist';
+    END IF;
+
     UPDATE VEHICLE
     SET COLOR = p_color
     WHERE VEHICLE_ID = p_vehicle_id;
